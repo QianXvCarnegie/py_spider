@@ -610,38 +610,45 @@ def 函数名(形式参数):
 
 3. #### json模块(重中之重)
 
-   现在的网站不同于从前了. 习惯性用json来传递数据. 所以, 我们必须要知道json是啥, 以及python如何处理json. 
-
    json是一种类似字典一样的东西.  对于python而言, json是字符串. 
 
    例如, 
 
    ```python
-s = '{"name": "jay", "age": 18}'
+   s = '{"name": "jay", "age": 18}'
    ```
-   
-   你看. 这破玩意就是`json`
 
    如何来转化它. 
 
    **<span style="background-color:yellow;color:red;">json字符串 => python字典</span>**
 
    ```python
-import json
-   s = '{"name": "jay", "age": 18}'
    dic = json.loads(s)
-   print(type(dic))
    ```
-   
+
    **<span style="background-color:yellow;color:red;">python字典 => json字符串</span>**
 
    ```python
-import json
-   dic = {"name": "jay", "age": 18}
    s = json.dumps(dic)
-   print(type(s))
    ```
+
+   特别注意，一个爬虫小坑.
+
+   ```py
+   # 在前端，json无空格："{"money":null,"married":false}"
    
+   # 在py解释器，会自动给json加空格: {"money": null, "married":false}
+   
+   import json
+   s = '{"name": "汪峰", "age" : 18, "money" : null}'
+   
+   dic = {'money': None, 'married': False, 'name': '汪峰', 'age': 18}
+   # 转化的时候. 增加一个参数
+   s = json.dumps(dic, separators=(',', ':'))
+   print(s)
+   # ctrl+鼠标点 dumps：进入源码，复制 (',', ':')
+   ```
+
    
 
 4. #### random模块
@@ -663,58 +670,80 @@ import json
 
 5. #### 异常处理(重中之重)
 
-   这个是重点. 我们在写爬虫的时候. 非常容易遇到问题. 但这些问题本身并不一定是我们程序的问题. 
+   写爬虫时. 非常容易遇到问题. 但这些问题不一定是我们程序的问题. 
 
-   比如, 你在抓取某网站的时候. 由于网络波动或者他服务器本身压力太大. 导致本次请求失败. 这种现象太常见了. 此时, 我们程序这边就会崩溃. 打印一堆红色的文字. 让你难受的一P.  怎么办?
+   比如：网络波动、服务器本身压力太大—— 导致本次请求失败.  此时, 我们的程序会崩溃.   怎么办?
 
-   我们要清楚一个事情. 我们平时在打开一个网址的时候. 如果长时间没有反应, 或者加载很慢的时候. 我们习惯性的会刷新网页. 对吧. 这个逻辑就像: `程序如果本次请求失败了. 能不能重新来一次`. OK, 我们接下来聊的这个异常处理. 就是干这个事儿的. 
+   
 
+   程序如果本次请求失败了. 那就重新来一次.
+   
    ```python
+   import traceback
    try: # 尝试...
-       print("假如, 我是一段爬虫代码, 请求到对方服务器")
-       print("我得出事儿啊")
        print(1/0)  # 出事儿了
-   except Exception as e:  # 出错了. 我给你兜着
-       print(e)  # 怎么兜?  打印一下. 就过去了
        
-   print("不论上面是否出错. 我这里, 依然可以执行")
+   except Exception as e:  # 记录出错  Exception是错误的根
+       # print(e)可以
+       print(traceback.format_exc()) 
+       # traceback 不仅记录 出错内容，还会记录 哪个文件哪一行
+       
    ```
-
-   看懂了么? 程序执行的时候. 如果`try`中的代码出现错误. 则自动跳到`except`中. 并执行`except`中的代码. 然后程序正常的, 继续执行
-
-   有了这玩意. 我们就可以写出一段很漂亮的代码逻辑:
-
-   ```python
-   while 1:
-       try:
-           我要发送请求了. 我要干美国CIA的总部. 我要上天
-           print("我成功了!!")
-           break  # 成功了.就跳出循环
-       except Exception as e:
-           print("失败了")
-           print("我不怕失败")
-           print("再来")
-          
+   
+   主动抛出异常：raise   （用得比较少）
+   
+   ```py
+   def cul_a_div_b(a, b):  # 计算a➗️b
+       if b == 0:
+           raise ZeroDivisionError("垃圾b，b不能为0")
+       return a / b
+   # 作为程序的设计人员，程序已经没有办法继续进行下去了，主动抛出错误
    ```
-
-   改良版:
-
-   ```python
-   import time
-   for i in range(10):
-       try:
-           我要发送请求了. 我要干美国CIA的总部. 我要上天
-           print("我成功了!!")
-           break  # 成功了.就跳出循环
-       except Exception as e:
-           print("失败了")
-           print("我不怕失败")
-           print("再来")
-           time.sleep(i * 10)
-          
+   
+   实战 模版思路：
+   
+   ```py
+   #实战逻辑：我要抓取 99页的数据，程序运行后，我去睡觉...让程序中间不中断
+   import traceback,time
+   
+   f1 = open("错误_url.log", mode = "a", encoding = "utf_8")  # 看看错误是啥
+   f2 = open("错误.log", mode = "a", encoding = "utf_8")  # 看看错误在哪
+   
+   def send_requests(page):
+       for i in range(5):
+           try:
+               print("{page}页抓取完毕")
+               time.sleep(1)
+               return
+           except Exception as e:
+               # f2是为了看错误信息
+               f2.write(f"{page}出现了问题")
+               f2.write(traceback.format_exc())
+               f2.write("\n")
+               time.sleep(1)
+   
+   	# 模式走到这里，重试5次，仍未得到数据
+   	# 所以把url和参数记录下来，第二天早上再去检查
+   	f1.write(f"{page}出现了问题")  
+   	f1.write("\n")
+       """
+   	f1只写page，明天
+   	 for i in f1: 
+               发请求(i)
+   	# 全再跑一遍,量大管饱，轻松直接
+       """
+   
+   def main():
+       for page in range(1, 100):
+           send_requests(page)
+           
+   if __name__ == "__main__" :
+       main()
+   	f1.close()
+       f2.close()
    ```
-
-   ..
+   
+   
 
 
 
