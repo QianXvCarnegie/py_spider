@@ -1,0 +1,182 @@
+1. 看到的网页是如何加载
+    输入url地址之后. 找到服务器. 服务器返回的是一段HTML代码
+    这一段代码会被浏览器解释执行.
+    这段代码被解释执行的期间. 会引发一系列的脚本/样式/资源的加载
+
+    这一段HTML代码被称为页面源代码
+
+    网站有可能会把数据直接放在html里面, 也有可能不放在这里面
+    
+    
+
+2.1 数据如果在页面源代码里返回的.
+    我们直接想办法拿到这一段HTML即可. 后续就是使用bs4, xpath进行解析
+
+2.2 我们要的数据也有可能不放在HTML代码中的
+    我们需要再其他请求里面找到加载数据的url.
+
+2.3 有的网站比较特殊. 页面是通过iframe或者frameset这种嵌套结构加载进来
+    你要扎到iframe的src, 把这个src当做一个新的url/网站去抓取.
+
+
+3. 浏览器的开发者工具. devtools的使用(100%熟练使用)
+    普通电脑: F12按钮. 打开开发者工具. devtools
+        在devtools里面, 找到`network`或者`网络`
+    抓包:
+        点开任意一个数据包.
+        1. headers
+            general, 基本信息
+                看url
+                看请求方式
+            请求头
+            响应头
+        2. preview（预览）
+            如果是html, 看到的是无样式, 无脚本的页面效果
+            如果是图片, 看到的就是图片
+            如果是json, 看到的是被格式化后的json, 我们通常在这里看json数据
+        3. response
+            纯粹就是服务器返回的东西. 一般看文本/页面源代码在这里看
+        4. payload
+            Query String Parameters
+                url上面的请求参数
+            form data
+                此时, post请求.
+                数据是按照form表单的形式传递的
+            request payload
+                此时, post请求.
+                数据是直接被挂载到请求体上的.
+
+Elements:
+    页面实时状态的html代码
+
+    我们拿到的东西是: 页面源代码
+    elements里面的东西:  页面源代码 -> js -> css -> 用户操作 -> 你看到的样子
+
+    注意, elements里面的页面结构不是给你用. 不要在这里看html结构...
+
+Source:
+    页面资源
+    包含: HTML, css, js, 图片, 视频.....
+        js代码的反向还原..
+
+        普通js代码  -> webpack打包/压缩 -> 压缩后的js代码/map文件
+        被还原之后的代码..很坑...
+
+        我建议大家. 把map还原代码的功能关掉...
+
+
+ctrl f 搜索
+ctrl s 保存
+刷新页面 -> ctrl + shift + r 避免缓存...
+
+http协议...
+    互联网上软件之间传输数据的格式 -> 协议..
+
+    我:  我给你的数据是js代码: var a = 10
+    小卡拉米:  a ....
+    
+    http 超文本传输协议. 专门用来传输HTML. 作用: 传输传递网页信息的
+
+
+    请求
+        从浏览器向服务器传递数据. 过程叫请求
+    
+        请求数据包:
+            请求行   -> 请求方式, url, http版本....
+            请求头   -> 对数据的描述, 对发送请求的设备的描述
+    
+            请求体   -> 给服务器传递的一些消息. 这里面的数据根据请求方式的不同, content-type的不同.数据也会不同.
+
+    响应
+        由服务器向浏览器返回数据. 过程叫响应
+    
+        响应的数据包:
+            状态行   -> 状态码
+            响应头   -> 对数据的描述, 服务器的相关信息, 指定的跳转url
+    
+            响应体   -> 服务器返回的数据
+
+
+
+常见的请求头(浏览器自带的, 意味着你的所有请求都应该添加):
+    Connection: keep-alive  keep-alive保持高可用状态. 会影响到我们爬虫. 大量请求的时候服务器可能会因为保持了太多的这种状态. 把你干掉
+        我们一般吧keep-alive关掉. 改成close. 就OK了.
+
+    User-Agent: 表示用户设备.该值记录着用户的设备信息. 该值直接从浏览器复制. 不要手动填写...
+
+    Accept: 表示希望服务器返回给浏览器什么类型的数据. 该值. 尽量从浏览器复制. 不要手动填写.
+
+    Accept-Encoding: 数据在被传输的时候,使用何种方式来进行压缩. 常规的是gzip, br.
+        如果你遇到了请求之后拿到一堆字节...但是, 浏览器那边拿到的是html...很有可能你遇到br了.
+        删掉br即可... 或者安装python的第三方库  pip install brotli
+
+    Content-Length: 传递的数据的长度
+
+
+    Content-Type: 传递给服务器的数据格式                              (重要)
+        1. application/x-www-form-urlencoded; charset=UTF-8
+           采用form表单的形式传递数据. 类似我们看到的url的组成
+           例如: year=2024&MethodName=BoxOffice_GetYearInfoData
+        2. application/json; charset=UTF-8
+           例如: {year: 2024, MethodName: BoxOffice_GetYearInfoData}
+
+    X-Requested-With: XMLHttpRequest 该信息并不是浏览器自带的. jquery库自动添加的.
+        表示该请求由Javascript中的XHR发送的.
+
+    Referer, 防盗链, 表示, 当前这个请求, 必须是由xxxx页面发起的. 否则不给资源.
+        典型的检测效果: 在当前页面都OK,没问题, 复制出去.新窗口里打不开. 这就是防盗链的效果.
+
+
+响应状态码:
+    200, 表示传输过程没有问题. 不能代表你就得到的正确的数据..
+    302, 一般表示重定向, 告诉浏览器. 你重新发一个请求到xxxx地址.. 该地址一般由响应头里面的Location返回.
+        Location: http://www.baidu.com
+    403, 服务器权限不够. 有可能是被反爬虫检测...还有可能是你访问的资源不对外的.. 请求节奏太快了...
+    404, 99.99%是你给的url不对..请检查你的url. 确保url和浏览器一致...
+    500, 代表服务器报错了. 此时, 请注意, 浏览器正常访问没问题. 你这边一访问500, 那么你的参数99%是给错了...
+        导致服务器解析你的参数报错.你要去检查你的参数, url...是否正确. 以及请求头里面的Content-Type
+
+
+响应头:
+    Location: http://www.baidu.com  浏览器重定向到一个新的地址
+
+
+cookie: 记录服务器和浏览器之间的状态的. http协议本身是不记录状态.. 后面会详细的聊..
+
+
+请求方式:
+    1. get
+        主要的逻辑是要东西..
+        不主动给服务器传递信息的. get请求, 是没有请求体的...
+
+        get既然没有请求体.那么如何给服务器传递消息？？？
+        get请求的所有的参数, 都会被添加到url上面
+        url上面的参数被称为 Query String Parameters  翻译: 查询字符串参数
+
+    2. post
+        post请求也是有url的, 在url上面也可能会挂载数据. Query String Parameters可能也会出现
+    
+        在请求体里面是有信息的. 参数一般通过请求体传递
+        请求体中的数据格式. 是根据Content-Type的不同, 给出不同的数据格式的.
+    
+        你能在浏览器中看到两种描述文字:
+            form data
+                此时, content-type是application/x-www-form-urlencoded; charset=UTF-8
+                数据格式是, year=2024&MethodName=BoxOffice_GetYearInfoData
+    
+            request payload
+                此时, content-type不一定是什么玩意了.常规情况是json
+                此时, request payload里面的东西是直接被挂载在请求体上的.
+
+
+最后一个概念:
+    URL是什么?
+    翻译过来, 统一资源定位符, 负责定位互联网上的一个资源
+    http://www.baidu.com/xxxxx/xxxx/xxxx/苍老师.avi?username=qiaofu&password=123456
+    https://desk-fd.zol-img.com.cn/t_s208x130c5/C9FF7VmIMM398.jpg
+
+    协议://域名/虚拟目录/虚拟目录/虚拟目录/资源?参数1=值1&参数2=值2....
+    
+    http协议默认的端口是 80
+    http+ssl/http+tls  => https协议默认的端口是 443
+    域名背后是  ip:port  => 锁定互联网上某一台服务器上的某一个应用程序.
