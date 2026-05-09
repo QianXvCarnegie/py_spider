@@ -1,8 +1,9 @@
 # urllib与requests
 
-##### 我们遇到所有的新网站, 分析的逻辑
+##### 遇到新网站—— 分析的逻辑：
 
 1. 看看数据是哪里加载进来的
+    
     1.1 从页面源代码加载进来
         此时, 想办法拿到页面源代码就成功了一半..
             浏览器是如何拿到页面源代码的?
@@ -10,14 +11,16 @@
                 我们只需要让我们的程序也能像浏览器一样, 发请求
                 我们应该也能拿到页面源代码
         然后, 进行页面数据提取即可(re, bs4, xpath)
-
+    
+    
+    
     1.2 不是从页面源代码加载的
         数据肯定是从网络加载进来的.
         不在页面源代码里. 一定在其他请求里面
         翻找(fetch/xhr,  js)
         找到对应的请求的url, 你只要发送请求即可,
         此时大概率你找到的是json数据
-
+    
     ​    只需要解析这个json就可以了.
 
 ## 一、urllib的学习
@@ -38,7 +41,7 @@ urllib在python中分为urllib和urllib2，在python3中为urllib
 
 ### 2、urllib的基本方法介绍
 
-### （可以了解一下，但实战都是request模块——封装好了的urlib）
+（可以了解一下，但实战都是request模块——封装好了的urlib）
 
 #### 2.1 urllib.Request
 
@@ -132,9 +135,9 @@ print(html_str)
 
 
 
-# requests模块的入门使用
+# requests模块的初步使用
 
-## 一、requests模块的入门使用
+## 一、requests模块的初步使用
 
 ##### 学习目标：
 
@@ -150,16 +153,14 @@ print(html_str)
 
 ### 1、为什么要重点学习requests模块，而不是urllib
 
-- 企业中用的最多的就是requests
+- 企业用的最多的是requests
 - requests的底层实现就是urllib
 - requests在python2 和python3中通用，方法完全一样
 - requests简单易用
 
-### 2、requests的作用与安装
+### 2、requests的作用
 
 作用：发送网络请求，返回响应数据
-
-命令： pip install requests  
 
 requests模块发送简单的get请求、获取响应
 
@@ -219,7 +220,7 @@ print(response.text)
   - 解码类型： 没有指定
   - 如何修改编码方式：`response.content.deocde("utf-8")`
 
-获取网页源码的通用方式：
+##### 3.2获取网页源码的通用方式：
 
 1. `response.content.decode()`
 2. `response.content.decode("UTF-8")`
@@ -229,37 +230,7 @@ print(response.text)
 
 所以：更推荐使用`response.content.deocde()`的方式获取响应的html页面
 
-##### 3.2 练习：把网络上的图片保存到本地
 
-> 我们来把`www.baidu.com`的图片保存到本地
-
-**思考：**
-
-- 以什么方式打开文件
-- 保存什么格式的内容
-
-**分析：**
-
-- 图片的url: https://www.baidu.com/img/bd_logo1.png
-- 利用requests模块发送请求获取响应
-- 以2进制写入的方式打开文件，并将response响应的二进制内容写入
-
-```python
-import requests
-
-# 图片的url
-url = 'https://www.baidu.com/img/bd_logo1.png'
-
-# 响应本身就是一个图片,并且是二进制类型
-response = requests.get(url)
-
-# print(response.content)
-
-# 以二进制+写入的方式打开文件
-with open('baidu.png', 'wb') as f:
-    # 写入response.content bytes二进制类型
-    f.write(response.content)
-```
 
 ### 4、发送带header的请求
 
@@ -320,7 +291,7 @@ print(response.request.headers)
 
 ### 5、发送带参数的请求
 
-> 我们在使用百度搜索的时候经常发现url地址中会有一个 `?`，那么该问号后边的就是请求参数，又叫做查询字符串
+> 使用百度搜索时，常发现 url地址中会有一个 `?`：该问号后的就是请求参数，又叫做查询字符串
 
 ##### 5.1 什么叫做请求参数：
 
@@ -344,7 +315,11 @@ requests.get(url,params=kw)
 
 ##### 5.4 关于参数的注意点
 
-在url地址中， 很多参数是没有用的，比如百度搜索的url地址，其中参数只有一个字段有用，其他的都可以删除 如何确定那些请求参数有用或者没用：挨个尝试！ 对应的,在后续的爬虫中，越到很多参数的url地址，都可以尝试删除参数
+在url地址中， **很多参数没有用**，比如百度搜索的url地址，其中参数只有一个字段有用，其他的都可以删除
+
+如何确定请求参数是否有用？
+
+**挨个尝试！** 对应的,在后续的爬虫中，越到很多参数的url地址，都可以尝试删除参数
 
 ##### 5.5 两种方式：发送带参数的请求
 
@@ -389,25 +364,81 @@ requests.get(url,params=kw)
   response = requests.get(url, headers=headers)
   ```
 
-### 6、小结
+### 6、出现部分乱码问题
 
-1. requests模块的介绍：能够帮助我们发起请求获取响应
-2. requests的基本使用：`requests.get(url)`
-3. 以及response常见的属性：
-   - `response.text` 响应体 str类型
-   - `respones.content` 响应体 bytes类型
-   - `response.status_code` 响应状态码
-   - `response.request.headers` 响应对应的请求头
-   - `response.headers` 响应头
-   - `response.request._cookies` 响应对应请求的cookie
-   - `response.cookies` 响应的cookie（经过了set-cookie动作）
-4. 掌握 requests.text和content的区别：text返回str类型，content返回bytes类型
-5. 掌握 解决网页的解码问题：
-   - `response.content.decode()`
-   - `response.content.decode("UTF-8")`
-   - `response.text`
-6. 掌握 requests模块发送带headers的请求：`requests.get(url, headers={})`
-7. 掌握 requests模块发送带参数的get请求：`requests.get(url, params={})`
+```py
+第一种解决方案, 试 utf-8|gbk
+detail_resp.encoding = "utf-8"   # 这里正常情况下应该参考 <meta charset="UTF-8">, 极个别情况下. 可能会出现一些不同...
+
+<meta charset="gb">
+<meta charset="gbk">
+<meta charset="gb2312">
+<meta charset="gb18030">
+上述编码统一都是GBK
+```
+
+```py
+第二种解决方案(推荐)
+detail_resp.encoding = detail_resp.apparent_encoding  # 自动识别编码。。 90%以上的乱码都能解决
+```
+
+### 7、关于 url 的拼接
+
+##### 7.1、拼接法
+
+```py
+# 法1. 当他字符串. 直接+
+detail_url = "https://www.shicimingju.com/" + href
+```
+
+```py
+# 2. urllib.parse => urljoin做拼接
+from urllib.parse import urljoin
+detail_url = urljoin(main_url, href)
+print(detail_url)
+```
+
+##### 7.2、认知部分url 前有无   **/ **   的区别
+
+```py
+# 在html中你能看到的href/链接的格式:
+
+1. <a href='/book/hongloumeng/1.html'>跳转</a>
+/book/hongloumeng/1.html
+最前面的 / 表示的是域名的根目录..
+
+https://www.shicimingju.com/book/hongloumeng/1.html
+# 此时：
+域名(shicimingju.com) + href(/book/hongloumeng/1.html)
+# 曾经中间的 /qiaofu 就没了
+
+
+2. <a href='book/hongloumeng/1.html'>跳转</a>
+
+book/hongloumeng/1.html
+# 此处找的是当前文件夹下的某个文件/文件夹
+
+https://www.shicimingju.com/qiaofu/book/hongloumeng/1.html
+# 此时：中间的 /qiaofu 仍然存在
+
+
+# 此处处理, 万万不能直接相加....此时建议大家使用urllib库来完成url的拼接. 
+
+```
+
+```py
+urljoin使用如下：
+url = "https://www.shicimingju.com/qiaofu/hongloumeng.html"
+
+href1 = "/book/hongloumeng/1.html"
+href2 = "book/hongloumeng/1.html"
+
+href1 = urljoin(url, href1)
+href2 = urljoin(url, href2)
+print(href1)  # https://www.shicimingju.com/book/hongloumeng/1.html
+print(href2)  # https://www.shicimingju.com/qiaofu/book/hongloumeng/1.html
+
+```
 
 
 
