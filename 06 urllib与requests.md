@@ -3,7 +3,7 @@
 ##### 遇到新网站—— 分析的逻辑：
 
 1. 看看数据是哪里加载进来的
-    
+   
     1.1 从页面源代码加载进来
         此时, 想办法拿到页面源代码就成功了一半..
             浏览器是如何拿到页面源代码的?
@@ -367,7 +367,8 @@ requests.get(url,params=kw)
 ### 6、出现部分乱码问题
 
 ```py
-第一种解决方案, 试 utf-8|gbk
+# 第一种解决方案, 试 utf-8|gbk
+
 detail_resp.encoding = "utf-8"   # 这里正常情况下应该参考 <meta charset="UTF-8">, 极个别情况下. 可能会出现一些不同...
 
 <meta charset="gb">
@@ -378,7 +379,8 @@ detail_resp.encoding = "utf-8"   # 这里正常情况下应该参考 <meta chars
 ```
 
 ```py
-第二种解决方案(推荐)
+# 第二种解决方案(推荐)
+
 detail_resp.encoding = detail_resp.apparent_encoding  # 自动识别编码。。 90%以上的乱码都能解决
 ```
 
@@ -388,11 +390,13 @@ detail_resp.encoding = detail_resp.apparent_encoding  # 自动识别编码。。
 
 ```py
 # 法1. 当他字符串. 直接+
+
 detail_url = "https://www.shicimingju.com/" + href
 ```
 
 ```py
 # 2. urllib.parse => urljoin做拼接
+
 from urllib.parse import urljoin
 detail_url = urljoin(main_url, href)
 print(detail_url)
